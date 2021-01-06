@@ -1,0 +1,94 @@
+#  CNN - ReLU e Max Pooling
+
+rm(list=ls())
+graphics.off()
+relu <- function(x) (x > 0) * x
+
+max_pooling <- function(img, w_size) {
+  # Initial dimensions
+  nrow <- nrow(img)
+  ncol <- ncol(img)
+  
+  # Padding with zeros if neccessary
+  remainder <- nrow %% w_size
+  if (remainder != 0) {
+    n_extra_rows <- w_size - remainder
+    img  <- rbind(img, matrix(0, n_extra_rows, ncol))
+    nrow <- nrow + n_extra_rows
+  }
+  
+  remainder <- ncol %% w_size
+  if (remainder != 0) {
+    n_extra_cols <- w_size - remainder
+    img <- cbind(img, matrix(0, nrow, n_extra_cols))
+    ncol <- ncol + n_extra_cols
+  }
+
+  # Applying max_pooling
+  
+  seqi <- seq(1, nrow - w_size + 1, w_size)
+  seqj <- seq(1, ncol - w_size + 1, w_size)
+  new_img <- matrix(0, length(seqi), length(seqj))
+  sub_img <- matrix(0, w_size, w_size)
+  k <- 1
+  for (i in seqi) {
+    l <- 1
+    for (j in seqj) {
+      sub_img <- img[i:(i + w_size - 1), j:(j + w_size - 1)]
+      new_img[k,l] <- max(sub_img)
+      l <- l + 1
+    }
+    k <- k + 1
+  }
+  
+  return(new_img)
+}
+
+
+MostraImagem <- function(img) {
+  rotate <- function(x) t(apply(x,2,rev))
+  cor <- rev(gray(50:1/50))
+  image(rotate(img), col=cor)
+}
+
+ConverteImagem <- function(x) {
+  matrix(x, nrow=64)
+}
+
+# ----------------------------------------------------- #
+
+require(RnavGraphImageData)
+
+# Carregando a Base de dados
+data(faces)
+faces <- t(faces)
+
+# Mostrando Imagem Original
+img_original <- ConverteImagem(faces[30,])
+MostraImagem(img_original)
+title("Imagem Original")
+
+
+# Filtro Bordas
+f_bordas = matrix(c(-1,-1,-1,-1,8,-1,-1,-1,-1),nrow=3, ncol = 3)
+N <- nrow(img_original)
+n <- ncol(img_original)
+img_filtrada <- matrix(0, nrow = N, ncol = n)
+for (i in 1:(N-2)) {
+  for (j in 1:(n-2)) {
+    img_filtrada[i,j] <- sum(img_original[i:(i+2), j:(j+2)] * f_bordas)
+  }
+}
+
+MostraImagem(img_filtrada)
+title("Filtro de Bordas")
+
+# Relu
+img_relu <- relu(img_filtrada)
+MostraImagem(img_relu)
+title("Relu")
+
+# Max Pooling
+img_final <- max_pooling(img_filtrada, 3)
+MostraImagem(img_final)
+title("Max Pooling")
